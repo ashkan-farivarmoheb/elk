@@ -1,0 +1,74 @@
+version: '2'
+services:
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:5.6.3
+        ports:
+            - 9200:9200
+            - 9300:9300
+        environment:
+            ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+        volumes:
+            - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+            - ./elasticsearch/data:/usr/share/elasticsearch/data
+        networks:
+            - elk
+    logstash:
+        image: docker.elastic.co/logstash/logstash:5.6.3
+        ports:
+            - 5000:5000
+        environment:
+            LS_JAVA_OPTS: "-Xmx512m -Xms512m"
+        volumes:
+            - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+            - ./logstash/pipeline:/usr/share/logstash/pipeline
+        networks:
+            - elk
+        depends_on:
+            - elasticsearch
+    
+    logstash-metric:
+        image: docker.elastic.co/logstash/logstash:5.6.3
+        ports:
+            - 5001:5001
+        environment:
+            LS_JAVA_OPTS: "-Xmx512m -Xms512m"
+        volumes:
+            - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+            - ./logstash/pipeline/metric:/usr/share/logstash/pipeline
+        networks:
+            - elk
+        depends_on:
+            - elasticsearch
+            
+    kibana:
+        image: docker.elastic.co/kibana/kibana:5.6.3
+        ports:
+            - 5601:5601
+        volumes:
+            - ./kibana/config/:/usr/share/kibana/config
+        networks:
+            - elk
+        depends_on:
+            - elasticsearch
+      
+#    setup_filebeat:
+#      image: docker.elastic.co/beats/filebeat:5.6.3
+#      volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+#      command: /usr/local/bin/setup-beat.sh filebeat
+#      networks: 
+#          - elk
+#      depends_on:
+#          - kibana
+#    
+#    filebeat:
+#      image: docker.elastic.co/beats/filebeat:5.6.3
+#      volumes: 
+#          - /var/log/nginx/access.log:/mnt/log:ro
+#      networks:
+#          - elk
+#      depends_on: 
+#          - elasticsearch 
+#          - setup_filebeat
+networks:
+    elk:
+        driver: bridge

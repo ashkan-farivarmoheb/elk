@@ -1,0 +1,8 @@
+filebeat.prospectors:
+- input_type: log
+  paths:
+    - /usr/local/var/log/nginx/access.log
+output.console:
+- pretty: true
+output.logstash:
+  hosts: ["localhost:5000"]
